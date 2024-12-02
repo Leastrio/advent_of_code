@@ -1,0 +1,63 @@
+# Day 02
+
+```elixir
+Mix.install([:kino_aoc])
+
+Kino.configure(inspect: [charlists: :as_lists])
+```
+
+## Input
+
+<!-- livebook:{"attrs":"eyJhc3NpZ25fdG8iOiJwdXp6bGVfaW5wdXQiLCJkYXkiOiIyIiwic2Vzc2lvbl9zZWNyZXQiOiJBRFZFTlRfT0ZfQ09ERV9TRVNTSU9OIiwieWVhciI6IjIwMjQifQ","chunks":null,"kind":"Elixir.KinoAOC.HelperCell","livebook_object":"smart_cell"} -->
+
+```elixir
+{:ok, puzzle_input} =
+  KinoAOC.download_puzzle("2024", "2", System.fetch_env!("LB_ADVENT_OF_CODE_SESSION"))
+```
+
+```elixir
+parsed = puzzle_input
+  |> String.split("\n")
+  |> Enum.map(fn x ->
+    Enum.map(String.split(x, " "), &String.to_integer/1)
+  end)
+```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## Part 1
+
+```elixir
+parsed
+|> Enum.count(fn x -> 
+  diffs = Enum.chunk_every(x, 2, 1, :discard)
+  |> Enum.map(fn [y, z] -> y - z end)
+  
+  Enum.all?(diffs, fn d -> d in 1..3 end) or Enum.all?(diffs, fn d -> -d in 1..3 end)
+end)
+```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## Part 2
+
+```elixir
+get_diffs = fn x ->
+  x
+  |> Enum.chunk_every(2, 1, :discard)
+  |> Enum.map(fn [l, r] -> l - r end)
+end
+
+parsed
+|> Enum.count(fn x -> 
+  diffs = [get_diffs.(x) | Enum.map(1..length(x), fn y -> 
+    x |> List.delete_at(y - 1) |> get_diffs.()
+    end)]
+  
+  Enum.any?(diffs, fn y -> 
+      Enum.all?(y, fn d -> d in 1..3 end) or Enum.all?(y, fn d -> -d in 1..3 end)
+    end)
+end)
+```
+
+<!-- livebook:{"offset":1345,"stamp":{"token":"XCP.spdOYYqSN4ZQKjBQr897rkFfmtdk--1n0YY4t-jb2e0x8YfMklSDq09M_x7uGpjQGbUN7NFEZMd5W5Gi3-ukdir9LlWXvKWRhM0zZ1MFOm0dL2khau9uE7x7GXrK_XRipxs","version":2}} -->
