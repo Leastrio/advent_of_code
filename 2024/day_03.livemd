@@ -20,10 +20,34 @@ Kino.configure(inspect: [charlists: :as_lists])
 ## Part 1
 
 ```elixir
+# Regex version
 Regex.scan(~r/mul\((\d+),(\d+)\)/, puzzle_input)
 |> Enum.reduce(0, fn [_capture, l, r], acc -> 
     acc + String.to_integer(l) * String.to_integer(r)
   end)
+```
+
+```elixir
+# Pattern matching version
+defmodule Part1 do
+  def parse("", _state, parsed), do: parsed
+  def parse("mul(" <> rest, _state, parsed), do: parse(rest, :left_arg, [{"", ""} | parsed])
+  def parse(")" <> rest, :right_arg, parsed), do: parse(rest, :nil, parsed)
+  def parse("," <> rest, :left_arg, parsed), do: parse(rest, :right_arg, parsed)
+  def parse(<<x, rest::binary>>, state, [{l, r} | tail] = parsed) when x in ?0..?9 do
+    case state do
+      :left_arg -> parse(rest, :left_arg, [{l <> <<x>>, r} | tail])
+      :right_arg -> parse(rest, :right_arg, [{l, r <> <<x>>} | tail])
+      _ -> parse(rest, state, parsed)
+    end
+  end
+  def parse(<<_x, rest::binary>>, :left_arg, [_head | tail]), do: parse(rest, nil, tail)
+  def parse(<<_x, rest::binary>>, :right_arg, [_head | tail]), do: parse(rest, nil, tail)
+  def parse(<<_x, rest::binary>>, state, parsed), do: parse(rest, state, parsed)
+end
+
+Part1.parse(puzzle_input, nil, [])
+|> Enum.reduce(0, fn {l, r}, acc -> acc + String.to_integer(l) * String.to_integer(r) end)
 ```
 
 <!-- livebook:{"branch_parent_index":0} -->
@@ -41,4 +65,4 @@ Regex.scan(~r/mul\((\d+),(\d+)\)|do\(\)|don't\(\)/, puzzle_input)
 |> elem(1)
 ```
 
-<!-- livebook:{"offset":1098,"stamp":{"token":"XCP.aGNOld7xTiGartwx4XNwRxquny6_W9_1hRVsGluJdFDFytUz21G8OYw5lAIhmHyC9AxT6f8AQhuSDhWozXvYaa2HqvDc1XSnXPZvNtwC_SFKTqoZxJ-2W0qM07naoxhTVZw","version":2}} -->
+<!-- livebook:{"offset":2154,"stamp":{"token":"XCP.GnldOB5zUX8HSfJIGUDvXMFCABr60yxKMf5IBZ6_uBLWan2hsC8R7Pb3_eHssWvnVS_9vBzo1n8UffyYjkHgxQ7rq0Y4yPewtZSWbPbokr5FF7yIKA3SNwWQhoANeTNEUFY","version":2}} -->
