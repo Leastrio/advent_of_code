@@ -1,0 +1,94 @@
+# Day 04
+
+```elixir
+Mix.install([:kino_aoc])
+
+Kino.configure(inspect: [charlists: :as_lists])
+```
+
+## Input
+
+<!-- livebook:{"attrs":"eyJhc3NpZ25fdG8iOiJwdXp6bGVfaW5wdXQiLCJkYXkiOiI0Iiwic2Vzc2lvbl9zZWNyZXQiOiJBRFZFTlRfT0ZfQ09ERV9TRVNTSU9OIiwieWVhciI6IjIwMjQifQ","chunks":null,"kind":"Elixir.KinoAOC.HelperCell","livebook_object":"smart_cell"} -->
+
+```elixir
+{:ok, puzzle_input} =
+  KinoAOC.download_puzzle("2024", "4", System.fetch_env!("LB_ADVENT_OF_CODE_SESSION"))
+```
+
+```elixir
+parsed = puzzle_input
+  |> String.split("\n")
+  |> Stream.with_index()
+  |> Enum.map(fn {line, iy} -> 
+    {
+      iy,
+      line
+      |> String.split("", trim: true)
+      |> Stream.with_index()
+      |> Enum.map(fn {char, ix} -> {ix, char} end)
+      |> Map.new()
+    }
+  end)
+  |> Map.new()
+```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## Part 1
+
+```elixir
+defmodule Part1 do
+  def count_matches(parsed) do
+    Enum.reduce(parsed, 0, fn {iy, line}, acc -> 
+      acc + Enum.reduce(line, 0, fn 
+        {ix, "X"}, acc2 -> acc2 + matches_xmas?(parsed, iy, ix)
+        _, acc2 -> acc2
+      end)  
+    end)
+  end
+
+  def matches_xmas?(parsed, iy, ix) do
+    directions = [
+      {0, 1}, {1, 0}, {0, -1}, {-1, 0}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
+    ]
+
+    Enum.reduce(directions, 0, fn {dy, dx}, acc -> 
+      acc + (if parsed[iy + dy][ix + dx] == "M" and
+        parsed[iy + 2*dy][ix + 2*dx] == "A" and 
+        parsed[iy + 3*dy][ix + 3*dx] == "S", do: 1, else: 0)
+    end)
+  end
+end
+
+Part1.count_matches(parsed)
+```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## Part 2
+
+```elixir
+defmodule Part2 do
+  def count_matches(parsed) do
+    Enum.reduce(parsed, 0, fn {iy, line}, acc -> 
+      acc + Enum.reduce(line, 0, fn {ix, char}, acc2 -> 
+        acc2 + if char == "A" and matches_xmas?(parsed, iy, ix), do: 1, else: 0
+      end)  
+    end)
+  end
+
+  def matches_xmas?(parsed, iy, ix) do
+    directions = [
+      {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
+    ]
+
+    2 <= Enum.reduce(directions, 0, fn {dy, dx}, acc -> 
+      acc + if parsed[iy + dy][ix + dx] == "M" and parsed[iy - dy][ix - dx] == "S", do: 1, else: 0
+    end)
+  end
+end
+
+Part2.count_matches(parsed)
+```
+
+<!-- livebook:{"offset":2154,"stamp":{"token":"XCP.iVVdmZDIaZk1Oqm9DTP1aCQ-4cGy1BJSdeAf1ZgWWPn7BO5moE4mvX9EilTH0LEjnDqA5W66dgObhzqK00Pg35hM4_tdP2Q8T5pADy_3RIlS_k22A4Sb7QlC8yHx3Jy29mg","version":2}} -->
