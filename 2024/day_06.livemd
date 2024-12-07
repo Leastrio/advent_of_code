@@ -1,0 +1,133 @@
+# Day 06
+
+```elixir
+Mix.install([:kino_aoc])
+
+Kino.configure(inspect: [charlists: :as_lists])
+```
+
+## Input
+
+<!-- livebook:{"attrs":"eyJhc3NpZ25fdG8iOiJwdXp6bGVfaW5wdXQiLCJkYXkiOiI2Iiwic2Vzc2lvbl9zZWNyZXQiOiJBRFZFTlRfT0ZfQ09ERV9TRVNTSU9OIiwieWVhciI6IjIwMjQifQ","chunks":null,"kind":"Elixir.KinoAOC.HelperCell","livebook_object":"smart_cell"} -->
+
+```elixir
+{:ok, puzzle_input} =
+  KinoAOC.download_puzzle("2024", "6", System.fetch_env!("LB_ADVENT_OF_CODE_SESSION"))
+```
+
+```elixir
+test = "....#.....
+.........#
+..........
+..#.......
+.......#..
+..........
+.#..^.....
+........#.
+#.........
+......#..."
+
+parsed = 
+  puzzle_input
+  |> String.split("\n")
+  |> Enum.with_index()
+  |> Enum.flat_map(fn {line, iy} -> 
+    String.graphemes(line)
+    |> Enum.with_index()
+    |> Enum.map(fn {char, ix} -> {{iy, ix}, char} end)
+  end)
+  |> Map.new()
+
+{{guard_y, guard_x} = guard_pos, _} = Enum.find(parsed, fn {_pos, char} -> char == "^" end)
+```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## Part 1
+
+```elixir
+defmodule Part1 do
+  def walk(map, {guard_d, guard_y, guard_x}) do
+    {new_y, new_x} = case guard_d do
+      :up -> {guard_y - 1, guard_x}
+      :down -> {guard_y + 1, guard_x}
+      :left -> {guard_y, guard_x - 1}
+      :right -> {guard_y, guard_x + 1}
+    end
+
+    case map[{new_y, new_x}] do
+      nil -> map
+      "#" -> walk(map, {rotate_right(guard_d), guard_y, guard_x})
+      _ -> 
+        put_in(map, [{new_y, new_x}], "X") |> walk({guard_d, new_y, new_x})
+    end
+  end
+
+  defp rotate_right(direction) do
+    case direction do
+      :up -> :right
+      :right -> :down
+      :down -> :left
+      :left -> :up
+    end
+  end
+
+  def count_visited(map) do
+    map
+    |> Map.values()
+    |> Enum.count(fn state -> state in ["X", "^"] end)
+  end
+end
+
+Part1.walk(parsed, {:up, guard_y, guard_x}) |> Part1.count_visited()
+```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## Part 2
+
+```elixir
+defmodule Part2 do
+  def walk(map, {guard_d, guard_y, guard_x}, visited) do
+    {new_y, new_x} = case guard_d do
+      :up -> {guard_y - 1, guard_x}
+      :down -> {guard_y + 1, guard_x}
+      :left -> {guard_y, guard_x - 1}
+      :right -> {guard_y, guard_x + 1}
+    end
+
+    if MapSet.member?(visited, {guard_d, new_y, new_x}) do
+      :loop
+    else
+      new_visited = MapSet.put(visited, {guard_d, new_y, new_x})
+      
+      case map[{new_y, new_x}] do
+        nil -> MapSet.new(visited, fn {_d, y, x} -> {y, x} end)
+        "#" -> walk(map, {rotate_right(guard_d), guard_y, guard_x}, new_visited)
+        _ -> 
+          put_in(map, [{new_y, new_x}], "X") |> walk({guard_d, new_y, new_x}, new_visited)
+      end
+    end
+  end
+
+  defp rotate_right(direction) do
+    case direction do
+      :up -> :right
+      :right -> :down
+      :down -> :left
+      :left -> :up
+    end
+  end
+end
+
+parsed
+|> Part2.walk({:up, guard_y, guard_x}, MapSet.new([]))
+|> Enum.reject(fn pos -> pos == guard_pos end)
+|> Task.async_stream(fn {y, x} -> 
+    map = put_in(parsed, [{y, x}], "#")
+    Part2.walk(map, {:up, guard_y, guard_x}, MapSet.new([]))
+  end, ordered: false)
+|> Enum.count(&match?({:ok, :loop}, &1))
+```
+
+<!-- livebook:{"offset":3104,"stamp":{"token":"XCP.1TOoLeCoMmVlSU94PRwKoL9zN7Uz-yssg8r8ez2QkscHyIazHx_JCYVEyUGlwpzQCNhRbnqJy_JuNI6ztML80V6SbFeMHrrfgcpJ6LqkLaeoEbUDuymCxacmCW5BbsUT6J8","version":2}} -->
