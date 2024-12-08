@@ -1,0 +1,103 @@
+# Day 08
+
+```elixir
+Mix.install([:kino_aoc, :complex])
+
+Kino.configure(inspect: [charlists: :as_lists])
+```
+
+## Input
+
+<!-- livebook:{"attrs":"eyJhc3NpZ25fdG8iOiJwdXp6bGVfaW5wdXQiLCJkYXkiOiI4Iiwic2Vzc2lvbl9zZWNyZXQiOiJBRFZFTlRfT0ZfQ09ERV9TRVNTSU9OIiwieWVhciI6IjIwMjQifQ","chunks":null,"kind":"Elixir.KinoAOC.HelperCell","livebook_object":"smart_cell"} -->
+
+```elixir
+{:ok, puzzle_input} =
+  KinoAOC.download_puzzle("2024", "8", System.fetch_env!("LB_ADVENT_OF_CODE_SESSION"))
+```
+
+```elixir
+parsed = 
+  puzzle_input
+  |> String.split("\n")
+  |> Enum.with_index()
+  |> Enum.flat_map(fn {line, row} -> 
+    line
+    |> String.graphemes()
+    |> Enum.with_index()
+    |> Enum.map(fn {char, col} -> 
+      {Complex.new(row, col), char}  
+    end)
+  end)
+  |> Enum.reject(fn {_coords, char} -> char == "." end)
+  |> Enum.group_by(&elem(&1, 1), &elem(&1, 0))
+
+defmodule Day08 do
+  def permutations(_list, 0), do: [[]]
+  def permutations([], _n), do: [[]]
+  def permutations(list, n) do
+    for head <- list, rest <- permutations(list--[head], n - 1), do: [head|rest]
+  end
+end
+```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## Part 1
+
+```elixir
+use Complex.Kernel
+
+defmodule Part1 do
+  def create_antinodes(antinodes, []), do: antinodes
+  def create_antinodes(antinodes, [[p, q] | tail]) do
+    antinodes
+    |> MapSet.put(p - (q - p))
+    |> create_antinodes(tail)
+  end
+end
+
+Enum.reduce(parsed, MapSet.new(), fn {_freq, coords}, acc -> 
+    Part1.create_antinodes(MapSet.new(), Day08.permutations(coords, 2))
+    |> MapSet.union(acc)
+end)
+|> Enum.count(&(trunc(&1.re) in 0..49 and trunc(&1.im) in 0..49))
+```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## Part 2
+
+```elixir
+use Complex.Kernel
+
+defmodule Part2 do
+  def create_antinodes(antinodes, []), do: antinodes
+  def create_antinodes(antinodes, [[p, q] | tail]) do
+    d = (q - p)
+    antinodes
+    |> MapSet.put(p - d)
+    |> calc_other_antinodes(p, d)
+    |> create_antinodes(tail)
+  end
+
+  def calc_other_antinodes(antinodes, p, d) do
+    if in_boundaries(p) do
+      antinodes
+      |> MapSet.put(p)
+      |> calc_other_antinodes(p - d, d)
+    else
+      antinodes
+    end
+  end
+
+  def in_boundaries(antinode), do: trunc(antinode.re) in 0..49 and trunc(antinode.im) in 0..49
+end
+
+Enum.reduce(parsed, MapSet.new(), fn {_freq, coords}, acc -> 
+    Part2.create_antinodes(MapSet.new(), Day08.permutations(coords, 2))
+    |> MapSet.union(acc)
+end)
+|> Enum.count(&Part2.in_boundaries/1)
+```
+
+<!-- livebook:{"offset":2446,"stamp":{"token":"XCP.XFFDgkb6iw4PnAyCnOl9pkeJaawALNl5gGCDbfI9MaR8Bt8OLm3zvBsH5--YJ5qHXg6vCF2edTGAvZtA5Y1vjlRnh9zvRAGgN4g8ah74x2NcU_icfNu8pCUr_yLXvX07s8s","version":2}} -->

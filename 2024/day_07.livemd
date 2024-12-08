@@ -93,4 +93,4 @@ end, ordered: false, timeout: :infinity)
 |> Enum.sum()
 ```
 
-<!-- livebook:{"offset":2374,"stamp":{"token":"XCP.UkW73oMcWQCmRCvjgtrhkzmCJcGpUO51w-iyv5kI5MQmhacrwxhYA9LnAb2ik1PYooO_Wc7chmkI59VQlv4saG2jkzGjiEmLuvjYJEG0ArhCigtrQLlgKHM0Uo1awkk5wqc","version":2}} -->
+<!-- livebook:{"offset":2241,"stamp":{"token":"XCP.zWLsjreoILYBE7pvaW2hreqtgdqKtjDRePq01LzMeI7pJ5hVfpY7_jnW4ej01It3xqKF_6zIe7brQxQJNfWJCH9Nhc-7R1HcL4QkZVbkBcZQazgExKshnqXipy2LUruTUoM","version":2}} -->
